@@ -52,13 +52,3 @@ prompt
 server.log
 # Skills directory
 /skills/
-# Pantheon game-specific ignores
-/db/
-/tool-results/
-/upload/
-/research_*.json
-/worklog.md
-/.zscripts/
-pantheon_phase0_*.png
-*.db
-*.db-journal

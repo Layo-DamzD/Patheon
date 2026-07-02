@@ -6,6 +6,7 @@ import { CapsuleCollider, useRapier, RigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
+import { cameraInput } from '@/lib/game/cameraInput';
 
 /**
  * Velora — The Speedster
@@ -110,13 +111,16 @@ export function Velora({}: VeloraProps) {
     isSprintingRef.current = sprintHeld;
     isJoggingRef.current = jogHeld && !sprintHeld;
 
-    // Camera rotation from right stick
-    cameraYawRef.current -= input.cameraX * delta * 2.5;
+    // Camera rotation from right-side drag (read from singleton, consume immediately)
+    cameraYawRef.current -= cameraInput.deltaX;
     cameraPitchRef.current = THREE.MathUtils.clamp(
-      cameraPitchRef.current + input.cameraY * delta * 1.5,
+      cameraPitchRef.current + cameraInput.deltaY,
       -0.5,
       0.8
     );
+    // Reset deltas after consuming
+    cameraInput.deltaX = 0;
+    cameraInput.deltaY = 0;
 
     // ─────────────────────────────────────
     // 2. Slow Time (toggle, with cooldown)
@@ -351,7 +355,7 @@ export function Velora({}: VeloraProps) {
         ref={bodyRef}
         type="dynamic"
         colliders={false}
-        position={[0, 5, 0]}
+        position={[25, 5, 25]}
         enabledRotations={[false, true, false]}
         linearDamping={0.5}
         angularDamping={1}

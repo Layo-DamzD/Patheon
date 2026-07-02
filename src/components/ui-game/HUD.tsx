@@ -199,7 +199,7 @@ export function HUD() {
       <div
         style={{
           position: 'absolute',
-          bottom: 200,
+          bottom: 100,
           left: '50%',
           transform: 'translateX(-50%)',
           background: 'rgba(12, 11, 10, 0.85)',
@@ -213,7 +213,7 @@ export function HUD() {
         }}
       >
         <span style={{ color: '#debf63', fontWeight: 700 }}>Left stick</span> move ·{' '}
-        <span style={{ color: '#1e90ff', fontWeight: 700 }}>Right stick</span> camera ·{' '}
+        <span style={{ color: '#1e90ff', fontWeight: 700 }}>Drag right</span> camera ·{' '}
         <span style={{ color: '#1e90ff', fontWeight: 700 }}>SPRINT</span> super speed
       </div>
 
