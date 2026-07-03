@@ -195,14 +195,19 @@ export function Velora() {
     // ─────────────────────────────────────
     if ((input.lightning && !lightningHeldRef.current || consumeLightningPress()) && hero.lightningCooldown <= 0) {
       const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, cameraYawRef.current, 0));
-      forward.y = 0.05;
+      forward.y = 0;
       forward.normalize();
 
       const bolt = {
         id: Math.random().toString(36).slice(2),
-        position: new THREE.Vector3(position.current.x, position.current.y + 1, position.current.z),
+        position: new THREE.Vector3(
+          position.current.x + forward.x * 2,  // Start 2 units in front of Velora
+          position.current.y + 1,
+          position.current.z + forward.z * 2
+        ),
         velocity: forward.multiplyScalar(t.lightningSpeed),
         life: t.lightningRange / t.lightningSpeed,
+        direction: forward.clone(),  // Store direction for orienting the mesh
       };
       setLightningBolts((prev) => [...prev, bolt]);
       setHero({ lightningCooldown: t.lightningCooldown });
@@ -372,14 +377,43 @@ export function Velora() {
         />
       </points>
 
-      {/* Lightning bolts */}
+      {/* Lightning bolts — big, bright, oriented in travel direction */}
       <group>
-        {lightningBolts.map((bolt) => (
-          <mesh key={bolt.id} position={bolt.position.toArray()}>
-            <cylinderGeometry args={[0.05, 0.15, 1.5, 6]} />
-            <meshStandardMaterial color="#ffffff" emissive="#1e90ff" emissiveIntensity={3} />
-          </mesh>
-        ))}
+        {lightningBolts.map((bolt) => {
+          // Calculate rotation to orient cylinder along travel direction
+          // Cylinder default is Y-axis. We want it along the horizontal direction.
+          const angle = Math.atan2(bolt.direction.x, bolt.direction.z);
+          return (
+            <group key={bolt.id} position={bolt.position.toArray()} rotation={[0, angle, Math.PI / 2]}>
+              {/* Main bolt body — thick and bright */}
+              <mesh>
+                <cylinderGeometry args={[0.3, 0.3, 4, 8]} />
+                <meshStandardMaterial
+                  color="#ffffff"
+                  emissive="#1e90ff"
+                  emissiveIntensity={5}
+                  toneMapped={false}
+                />
+              </mesh>
+              {/* Outer glow shell */}
+              <mesh>
+                <cylinderGeometry args={[0.6, 0.6, 4, 8]} />
+                <meshBasicMaterial
+                  color="#1e90ff"
+                  transparent
+                  opacity={0.3}
+                  toneMapped={false}
+                />
+              </mesh>
+              {/* Point light to illuminate surroundings */}
+              <pointLight
+                intensity={50}
+                distance={15}
+                color="#1e90ff"
+              />
+            </group>
+          );
+        })}
       </group>
     </>
   );
