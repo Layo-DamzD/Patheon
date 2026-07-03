@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
-import { consumeSlowTimePress, consumeLightningPress, consumePhasePress } from '@/lib/game/keyboardInput';
+import { consumeSlowTimePress, consumeLightningPress, consumePhasePress, consumeBlowPress } from '@/lib/game/keyboardInput';
 import { ModelCharacter } from '@/components/game/ModelCharacter';
 
 /**
@@ -62,6 +62,8 @@ export function Velora() {
   const lightningHeldRef = useRef(false);
   const phaseHeldRef = useRef(false);
   const phaseEndRef = useRef(0);
+  const blowHeldRef = useRef(false);
+  const blowCooldownRef = useRef(0);
 
   // Movement state
   const isSprintingRef = useRef(false);
@@ -170,13 +172,13 @@ export function Velora() {
       velocity.current.z = 0;
     }
 
-    // Apply gravity
-    velocity.current.y += GRAVITY * delta * timeScale;
+    // Apply gravity (NOT affected by slow time — Velora moves at full speed always)
+    velocity.current.y += GRAVITY * delta;
 
-    // Apply velocity to position
-    position.current.x += velocity.current.x * delta * timeScale;
-    position.current.y += velocity.current.y * delta * timeScale;
-    position.current.z += velocity.current.z * delta * timeScale;
+    // Apply velocity to position (Velora immune to slow time — her speed stays the same)
+    position.current.x += velocity.current.x * delta;
+    position.current.y += velocity.current.y * delta;
+    position.current.z += velocity.current.z * delta;
 
     // Ground collision
     if (position.current.y < GROUND_Y) {
@@ -246,19 +248,59 @@ export function Velora() {
     if (changed) setLightningBolts(survivors);
 
     // ─────────────────────────────────────
-    // 5. Phase (Walk through walls)
+    // 5. Phase (Walk through walls) — TOGGLE, not timer
+    // Press once → phase ON (stays on). Press again → phase OFF.
+    // Cooldown only applies after turning OFF (prevents spam).
     // ─────────────────────────────────────
     if ((input.phase && !phaseHeldRef.current || consumePhasePress()) && hero.phaseCooldown <= 0) {
-      phaseEndRef.current = state.clock.elapsedTime + t.phaseDuration;
-      setHero({ isPhasing: true, phaseCooldown: t.phaseCooldown });
+      if (hero.isPhasing) {
+        // Turn OFF phasing
+        setHero({ isPhasing: false, phaseCooldown: 1 }); // short 1s cooldown after turning off
+      } else {
+        // Turn ON phasing — stays on until user cancels
+        setHero({ isPhasing: true });
+      }
     }
     phaseHeldRef.current = input.phase;
 
-    if (hero.isPhasing && state.clock.elapsedTime >= phaseEndRef.current) {
-      setHero({ isPhasing: false });
-    }
     if (hero.phaseCooldown > 0 && !hero.isPhasing) {
       setHero({ phaseCooldown: Math.max(0, hero.phaseCooldown - delta) });
+    }
+
+    // ─────────────────────────────────────
+    // 6. BLOW — melee attack (speed punch)
+    // Hits all enemies within 3 units in front of Velora.
+    // Cooldown: 0.5s (fast melee for a speedster)
+    // ─────────────────────────────────────
+    if ((input.blow && !blowHeldRef.current || consumeBlowPress()) && blowCooldownRef.current <= 0) {
+      // Calculate forward direction
+      const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, cameraYawRef.current, 0));
+      forward.y = 0;
+      forward.normalize();
+
+      // Attack point: 2 units in front of Velora
+      const attackPoint = new THREE.Vector3(
+        position.current.x + forward.x * 2,
+        position.current.y + 1,
+        position.current.z + forward.z * 2
+      );
+
+      // Damage all enemies within 3 units of attack point
+      for (const enemy of enemies) {
+        if (enemy.state === 'dead') continue;
+        const dx = attackPoint.x - enemy.position[0];
+        const dy = attackPoint.y - (enemy.position[1] + 1);
+        const dz = attackPoint.z - enemy.position[2];
+        if (dx * dx + dy * dy + dz * dz < 9) { // 3 unit radius = 9 squared
+          damageEnemy(enemy.id, 40); // 40 damage per punch
+        }
+      }
+      blowCooldownRef.current = 0.5;
+    }
+    blowHeldRef.current = input.blow;
+
+    if (blowCooldownRef.current > 0) {
+      blowCooldownRef.current = Math.max(0, blowCooldownRef.current - delta);
     }
 
     // ─────────────────────────────────────
@@ -325,15 +367,39 @@ export function Velora() {
     <>
       <group ref={groupRef}>
         <group ref={visualRef}>
-          {/* REAL 3D model character (from GLB file, not primitives) */}
+          {/* REAL 3D model character — Velora (female model from GLB) */}
           <ModelCharacter
-            url="/models/Soldier.glb"
+            url="/models/Velora.glb"
             speedRef={currentSpeedRef}
             isMovingRef={isMovingRef}
             scale={1.5}
             rotationOffset={Math.PI}  // Face away from camera by default (3rd person)
             positionOffset={[0, 0, 0]}  // Model origin is at feet
           />
+
+          {/* SPRINT GLOW — Flash-style lightning aura on body when running fast */}
+          {hero.isSprinting && (
+            <mesh position={[0, 1, 0]}>
+              <sphereGeometry args={[1.4, 16, 16]} />
+              <meshStandardMaterial
+                color="#1e90ff"
+                emissive="#1e90ff"
+                emissiveIntensity={0.5}
+                transparent
+                opacity={0.2}
+                wireframe
+              />
+            </mesh>
+          )}
+          {/* Inner glow shell when sprinting */}
+          {hero.isSprinting && (
+            <pointLight
+              position={[0, 1.5, 0]}
+              intensity={8}
+              distance={6}
+              color="#1e90ff"
+            />
+          )}
 
           {/* Lightning aura when slow-time active */}
           {hero.isSlowTimeActive && (

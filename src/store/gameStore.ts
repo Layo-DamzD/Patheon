@@ -15,6 +15,7 @@ export interface InputState {
   lightning: boolean;
   tornado: boolean;
   phase: boolean;
+  blow: boolean;      // Melee attack (punch/strike)
 }
 
 export interface HeroState {
@@ -93,6 +94,7 @@ const defaultInput: InputState = {
   lightning: false,
   tornado: false,
   phase: false,
+  blow: false,
 };
 
 const defaultHero: HeroState = {

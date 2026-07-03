@@ -26,6 +26,7 @@ export const keyboardInput = {
   slowTimePressed: false,   // edge-triggered (one-shot per press)
   lightningPressed: false,  // edge-triggered
   phasePressed: false,      // edge-triggered
+  blowPressed: false,       // edge-triggered (melee attack)
 };
 
 // Track which keys are held (for continuous movement + sprint)
@@ -45,6 +46,11 @@ export function consumeLightningPress(): boolean {
 export function consumePhasePress(): boolean {
   const v = keyboardInput.phasePressed;
   keyboardInput.phasePressed = false;
+  return v;
+}
+export function consumeBlowPress(): boolean {
+  const v = keyboardInput.blowPressed;
+  keyboardInput.blowPressed = false;
   return v;
 }
 
@@ -77,7 +83,7 @@ export function initKeyboard(setInput: (partial: any) => void) {
       'KeyW', 'KeyA', 'KeyS', 'KeyD',
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
       'ShiftLeft', 'ShiftRight',
-      'Space', 'KeyQ', 'KeyE',
+      'Space', 'KeyQ', 'KeyE', 'KeyF',
     ];
     if (gameKeys.includes(e.code)) {
       e.preventDefault();
@@ -88,6 +94,7 @@ export function initKeyboard(setInput: (partial: any) => void) {
       if (e.code === 'Space') keyboardInput.slowTimePressed = true;
       if (e.code === 'KeyQ') keyboardInput.lightningPressed = true;
       if (e.code === 'KeyE') keyboardInput.phasePressed = true;
+      if (e.code === 'KeyF') keyboardInput.blowPressed = true;
     }
 
     heldKeys.add(e.code);

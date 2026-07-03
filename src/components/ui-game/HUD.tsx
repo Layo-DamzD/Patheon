@@ -213,7 +213,7 @@ export function HUD() {
         }}
       >
         <span style={{ color: '#debf63', fontWeight: 700 }}>Mobile:</span> Left stick move · Drag right = camera · SPRINT = super speed<br/>
-        <span style={{ color: '#debf63', fontWeight: 700 }}>Desktop:</span> WASD = move · Mouse drag = camera · Shift = sprint · Space = slow · Q = bolt · E = phase
+        <span style={{ color: '#debf63', fontWeight: 700 }}>Desktop:</span> WASD = move · Mouse drag = camera · Shift = sprint · Space = slow · Q = bolt · F = blow · E = phase
       </div>
 
       {/* Pause button (top-right corner) */}

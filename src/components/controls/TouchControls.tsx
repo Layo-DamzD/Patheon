@@ -148,6 +148,17 @@ const PhaseIcon = (
     <ellipse cx="12" cy="18" rx="6" ry="3" strokeDasharray="2,2" />
   </svg>
 );
+const BlowIcon = (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    {/* Fist/punch icon */}
+    <path d="M5 12c0-2 2-4 5-4h6c2 0 3 1 3 3v4c0 2-2 3-4 3h-4c-3 0-6-2-6-4v-2z" />
+    <circle cx="9" cy="11" r="1" fill="#000" />
+    <circle cx="12" cy="10.5" r="1" fill="#000" />
+    <circle cx="15" cy="11" r="1" fill="#000" />
+    {/* Impact lines */}
+    <path d="M19 8l2-1M20 12l2 0M19 16l2 1" stroke="currentColor" strokeWidth="1.5" fill="none" />
+  </svg>
+);
 
 export function TouchControls() {
   const leftZoneRef = useRef<HTMLDivElement>(null);
@@ -383,6 +394,7 @@ export function TouchControls() {
   const handleSlowTime = useCallback((a: boolean) => setInput({ slowTime: a }), [setInput]);
   const handleLightning = useCallback((a: boolean) => setInput({ lightning: a }), [setInput]);
   const handlePhase = useCallback((a: boolean) => setInput({ phase: a }), [setInput]);
+  const handleBlow = useCallback((a: boolean) => setInput({ blow: a }), [setInput]);
 
   return (
     <div
@@ -453,7 +465,8 @@ export function TouchControls() {
       />
 
       {/* ═══════════════════════════════════════════
-          BOTTOM-RIGHT: All 5 action buttons in a row
+          BOTTOM-RIGHT: All 6 action buttons in a row
+          JOG | SPRINT | SLOW | BOLT | BLOW | PHASE
           ═══════════════════════════════════════════ */}
       <div
         style={{
@@ -461,7 +474,7 @@ export function TouchControls() {
           right: 16,
           bottom: 24,
           display: 'flex',
-          gap: 8,
+          gap: 6,
           pointerEvents: 'auto',
           zIndex: 11,
         }}
@@ -498,6 +511,13 @@ export function TouchControls() {
           onPress={handleLightning}
           cooldown={hero.lightningCooldown}
           color="#1e90ff"
+        />
+        <ActionButton
+          id="btn-blow"
+          label="BLOW"
+          icon={BlowIcon}
+          onPress={handleBlow}
+          color="#c88079"
         />
         <ActionButton
           id="btn-phase"
