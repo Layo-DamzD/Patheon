@@ -131,15 +131,15 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   return (
     <group ref={groupRef}>
       <group ref={visualRef}>
-        {/* Real humanoid character — dark clothes, thug build */}
+        {/* Real humanoid character — male athletic, dark clothes */}
         <HumanoidCharacter
-          bodyColor={isStunned ? '#5a5a5a' : '#2a1a1a'}
-          bodyEmissive="#000000"
-          bodyEmissiveIntensity={0}
-          headColor="#8b6f47"
+          primaryColor={isStunned ? '#5a5a5a' : '#2a1a1a'}
+          accentColor="#1a1a1a"
+          skinColor="#8b6f47"
           hairColor="#1a1a1a"
+          bodyShape="male-athletic"
           height={0.95}
-          build="average"
+          hasPonytail={false}
           speedRef={speedRef}
           isMovingRef={isMovingRef}
         />

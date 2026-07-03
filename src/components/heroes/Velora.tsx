@@ -325,19 +325,27 @@ export function Velora() {
     <>
       <group ref={groupRef}>
         <group ref={visualRef}>
-          {/* Real humanoid character — blue speedster suit with cape */}
+          {/* Real humanoid character — female speedster with hero colors */}
           <HumanoidCharacter
-            bodyColor="#1e90ff"
-            bodyEmissive="#1e90ff"
-            bodyEmissiveIntensity={0.25}
-            headColor="#f5d4b8"
+            primaryColor="#1e90ff"
+            accentColor="#debf63"
+            skinColor="#f5d4b8"
             hairColor="#1a1a2e"
+            bodyShape="female-hourglass"
             height={1}
-            build="slim"
             hasCape
             capeColor="#1e90ff"
+            hasPonytail
             speedRef={currentSpeedRef}
             isMovingRef={isMovingRef}
+          />
+
+          {/* Face light — ensures face is always visible */}
+          <pointLight
+            position={[0, 2, 2]}
+            intensity={3}
+            distance={5}
+            color="#ffffff"
           />
 
           {/* Eye glow when sprinting — overlaid on the humanoid */}

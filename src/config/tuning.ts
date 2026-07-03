@@ -20,8 +20,8 @@ export const TUNING = {
     deceleration: 315,      // How fast Velora stops when input released (higher = less slide) (+5%)
 
     // Camera
-    cameraDistance: 8,     // Distance behind Velora
-    cameraHeight: 4,       // Height above Velora
+    cameraDistance: 4.5,     // Distance behind Velora (was 8 — too far)
+    cameraHeight: 2.5,       // Height above Velora (was 4 — too high)
     cameraLerp: 0.15,      // How smoothly camera follows (lower = smoother, higher = snappier)
 
     // Wall-Run
