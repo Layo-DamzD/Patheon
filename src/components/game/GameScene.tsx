@@ -1,8 +1,7 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { Physics } from '@react-three/rapier';
-import { Sky, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { Midtown } from '@/components/world/Midtown';
@@ -11,7 +10,12 @@ import { CrimeManager } from '@/components/enemies/CrimeManager';
 
 /**
  * Game Scene — the actual 3D world.
- * Renders inside a Canvas. Houses physics, lighting, world, hero, enemies.
+ *
+ * NOTE: @react-three/rapier Physics was removed because v2.2.0 has a
+ * compatibility issue with R3F v9 that causes the entire scene to not render.
+ * Physics is now handled manually in each component's useFrame (gravity,
+ * ground collision, velocity). This is simpler and more reliable for Phase 0.
+ * We can revisit Rapier when the compatibility issue is resolved.
  */
 
 export function GameScene() {
@@ -22,29 +26,32 @@ export function GameScene() {
         fov: 75,
         near: 0.1,
         far: 1000,
-        position: [25, 10, 35],
+        position: [0, 10, -90],
       }}
       gl={{
         antialias: true,
         powerPreference: 'high-performance',
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.1,
+        alpha: false,
       }}
       dpr={TUNING.render.pixelRatio}
-      onCreated={({ gl }) => {
-        gl.setClearColor(TUNING.render.fogColor);
+      onCreated={({ gl, scene }) => {
+        gl.setClearColor('#1a2332', 1);
+        scene.background = new THREE.Color('#1a2332');
+        scene.fog = new THREE.Fog('#1a2332', 100, 500);
       }}
     >
       {/* Lighting */}
-      <ambientLight intensity={0.4} color="#5a6b8c" />
+      <ambientLight intensity={0.6} color="#ffffff" />
       <hemisphereLight
-        intensity={0.5}
+        intensity={0.8}
         color="#cbd5e0"
-        groundColor="#2a1a1a"
+        groundColor="#3a2a1a"
       />
       <directionalLight
         position={[40, 60, 20]}
-        intensity={2}
+        intensity={2.5}
         castShadow
         shadow-mapSize={[TUNING.render.shadowMapSize, TUNING.render.shadowMapSize]}
         shadow-camera-left={-100}
@@ -56,16 +63,7 @@ export function GameScene() {
         color="#fff5e6"
       />
 
-      {/* Sky / atmosphere */}
-      <fog
-        attach="fog"
-        args={[
-          TUNING.render.fogColor,
-          TUNING.render.fogNear,
-          TUNING.render.fogFar,
-        ]}
-      />
-      <color attach="background" args={['#0c0b0a']} />
+      {/* Stars background */}
       <Stars
         radius={300}
         depth={60}
@@ -76,21 +74,14 @@ export function GameScene() {
         speed={0.5}
       />
 
-      {/* Physics world */}
-      <Physics
-        gravity={[0, TUNING.physics.gravity, 0]}
-        timeStep={TUNING.physics.fixedTimeStep}
-        interpolate
-      >
-        {/* The city */}
-        <Midtown />
+      {/* The city */}
+      <Midtown />
 
-        {/* The hero */}
-        <Velora />
+      {/* The hero — manual physics, no RigidBody needed */}
+      <Velora />
 
-        {/* Crime manager + enemies */}
-        <CrimeManager />
-      </Physics>
+      {/* Crime manager + enemies — also manual physics */}
+      <CrimeManager />
     </Canvas>
   );
 }

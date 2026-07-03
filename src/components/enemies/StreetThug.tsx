@@ -2,25 +2,31 @@
 
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { RigidBody, CapsuleCollider } from '@react-three/rapier';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 
 /**
- * Street Thug — Phase 0 enemy
- * AI states: idle → chase → attack → stunned → dead
- * Simple AI: if hero within chaseRange, move toward hero. If within attackRange, attack.
+ * Street Thug — Manual Physics Version
+ * No RigidBody needed. Position is managed via a group ref.
  */
+
+const GRAVITY = -30;
+const GROUND_Y = 1;
 
 interface StreetThugProps {
   id: string;
   position: [number, number, number];
 }
 
-export function StreetThug({ id, position }: StreetThugProps) {
-  const bodyRef = useRef<any>(null);
+export function StreetThug({ id, position: initialPos }: StreetThugProps) {
+  const groupRef = useRef<THREE.Group>(null);
   const visualRef = useRef<THREE.Group>(null);
+
+  // Physics state
+  const pos = useRef(new THREE.Vector3(initialPos[0], initialPos[1], initialPos[2]));
+  const vel = useRef(new THREE.Vector3(0, 0, 0));
+  const rotY = useRef(0);
 
   const enemy = useGameStore((s) => s.enemies.find((e) => e.id === id));
   const hero = useGameStore((s) => s.hero);
@@ -32,80 +38,73 @@ export function StreetThug({ id, position }: StreetThugProps) {
   const attackWindupEnd = useRef(0);
 
   useFrame((state, delta) => {
-    if (!bodyRef.current || !visualRef.current) return;
+    if (!groupRef.current || !visualRef.current) return;
     if (!enemy || enemy.state === 'dead') return;
 
-    delta = delta * timeScale; // affected by slow time
+    delta = delta * timeScale;
 
-    const rb = bodyRef.current;
     const heroPos = hero.position;
-    const thugPos = rb.translation();
-
-    const dx = heroPos[0] - thugPos.x;
-    const dz = heroPos[2] - thugPos.z;
-    const distSq = dx * dx + dz * dz;
-    const dist = Math.sqrt(distSq);
+    const dx = heroPos[0] - pos.current.x;
+    const dz = heroPos[2] - pos.current.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
 
     const t = TUNING.streetThug;
 
-    // AI state machine
-    if (enemy.state === 'stunned') {
-      // Just stand still, wait for stun to end (handled by store via damage)
-      return;
-    }
+    if (enemy.state === 'stunned') return;
 
     if (dist < t.chaseRange) {
       if (dist < t.attackRange) {
-        // Attack
-        if (enemy.state !== 'attack') {
-          updateEnemy(id, { state: 'attack' });
-        }
+        if (enemy.state !== 'attack') updateEnemy(id, { state: 'attack' });
 
-        // Windup then damage
         const now = state.clock.elapsedTime;
         if (lastAttackTime.current === 0) {
           lastAttackTime.current = now;
           attackWindupEnd.current = now + t.attackWindup;
         }
         if (now >= attackWindupEnd.current && now - lastAttackTime.current >= t.attackCooldown) {
-          // Apply damage
           damageHero(t.attackDamage);
           lastAttackTime.current = now;
           attackWindupEnd.current = now + t.attackWindup;
         }
 
-        // Face hero
-        const targetRot = Math.atan2(dx, dz);
-        visualRef.current.rotation.y = targetRot;
+        rotY.current = Math.atan2(dx, dz);
       } else {
-        // Chase
-        if (enemy.state !== 'chase') {
-          updateEnemy(id, { state: 'chase' });
-        }
+        if (enemy.state !== 'chase') updateEnemy(id, { state: 'chase' });
         lastAttackTime.current = 0;
 
-        // Move toward hero
         const dirX = dx / dist;
         const dirZ = dz / dist;
-        const vel = rb.linvel();
-        rb.setLinvel({ x: dirX * t.moveSpeed, y: vel.y, z: dirZ * t.moveSpeed }, true);
-
-        // Face hero
-        const targetRot = Math.atan2(dirX, dirZ);
-        visualRef.current.rotation.y = targetRot;
+        vel.current.x = dirX * t.moveSpeed;
+        vel.current.z = dirZ * t.moveSpeed;
+        rotY.current = Math.atan2(dirX, dirZ);
       }
     } else {
-      // Idle
-      if (enemy.state !== 'idle') {
-        updateEnemy(id, { state: 'idle' });
-      }
+      if (enemy.state !== 'idle') updateEnemy(id, { state: 'idle' });
       lastAttackTime.current = 0;
-      const vel = rb.linvel();
-      rb.setLinvel({ x: 0, y: vel.y, z: 0 }, true);
+      vel.current.x = 0;
+      vel.current.z = 0;
     }
 
-    // Update enemy position in store
-    updateEnemy(id, { position: [thugPos.x, thugPos.y, thugPos.z] });
+    // Apply gravity
+    vel.current.y += GRAVITY * delta;
+
+    // Apply velocity
+    pos.current.x += vel.current.x * delta;
+    pos.current.y += vel.current.y * delta;
+    pos.current.z += vel.current.z * delta;
+
+    // Ground collision
+    if (pos.current.y < GROUND_Y) {
+      pos.current.y = GROUND_Y;
+      vel.current.y = 0;
+    }
+
+    // Apply to visual
+    groupRef.current.position.copy(pos.current);
+    visualRef.current.rotation.y = rotY.current;
+
+    // Update store
+    updateEnemy(id, { position: [pos.current.x, pos.current.y, pos.current.z] });
   });
 
   if (!enemy) return null;
@@ -114,27 +113,12 @@ export function StreetThug({ id, position }: StreetThugProps) {
   const isStunned = enemy.state === 'stunned';
 
   return (
-    <RigidBody
-      ref={bodyRef}
-      type="dynamic"
-      colliders={false}
-      position={position}
-      enabledRotations={[false, false, false]}
-      linearDamping={0.8}
-      angularDamping={1}
-      mass={1}
-    >
-      <CapsuleCollider args={[0.8, 0.4]} />
-
+    <group ref={groupRef} position={initialPos}>
       <group ref={visualRef}>
-        {/* Body — dark clothes */}
+        {/* Body */}
         <mesh position={[0, 0, 0]} castShadow visible={!isDead}>
           <capsuleGeometry args={[0.35, 1, 4, 12]} />
-          <meshStandardMaterial
-            color={isStunned ? '#5a5a5a' : '#2a1a1a'}
-            roughness={0.8}
-            metalness={0.1}
-          />
+          <meshStandardMaterial color={isStunned ? '#5a5a5a' : '#2a1a1a'} roughness={0.8} />
         </mesh>
         {/* Head */}
         <mesh position={[0, 1.05, 0]} castShadow visible={!isDead}>
@@ -147,7 +131,7 @@ export function StreetThug({ id, position }: StreetThugProps) {
           <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
         </mesh>
 
-        {/* Health bar above head */}
+        {/* Health bar */}
         {!isDead && enemy.health < enemy.maxHealth && (
           <group position={[0, 2, 0]}>
             <mesh>
@@ -165,14 +149,10 @@ export function StreetThug({ id, position }: StreetThugProps) {
         {isStunned && (
           <mesh position={[0, 1.6, 0]}>
             <sphereGeometry args={[0.15, 8, 8]} />
-            <meshStandardMaterial
-              color="#debf63"
-              emissive="#debf63"
-              emissiveIntensity={2}
-            />
+            <meshStandardMaterial color="#debf63" emissive="#debf63" emissiveIntensity={2} />
           </mesh>
         )}
       </group>
-    </RigidBody>
+    </group>
   );
 }
