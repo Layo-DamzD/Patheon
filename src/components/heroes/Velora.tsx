@@ -7,7 +7,7 @@ import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
 import { consumeSlowTimePress, consumeLightningPress, consumePhasePress } from '@/lib/game/keyboardInput';
-import { HumanoidCharacter } from '@/components/game/HumanoidCharacter';
+import { ModelCharacter } from '@/components/game/ModelCharacter';
 
 /**
  * Velora — The Speedster (Manual Physics Version)
@@ -21,7 +21,7 @@ import { HumanoidCharacter } from '@/components/game/HumanoidCharacter';
  */
 
 const GRAVITY = -30;
-const GROUND_Y = 1.7; // hero capsule half-height
+const GROUND_Y = 0; // Model's feet are at y=0 (model origin is at feet)
 
 export function Velora() {
   const groupRef = useRef<THREE.Group>(null);
@@ -271,7 +271,7 @@ export function Velora() {
     );
     camera.position.lerp(targetCameraPos, t.cameraLerp);
 
-    targetLookAt.set(position.current.x, position.current.y + 1.5, position.current.z);
+    targetLookAt.set(position.current.x, position.current.y + 1.0, position.current.z);
     currentLookAt.lerp(targetLookAt, 0.15);
     camera.lookAt(currentLookAt);
 
@@ -325,43 +325,20 @@ export function Velora() {
     <>
       <group ref={groupRef}>
         <group ref={visualRef}>
-          {/* Real humanoid character — female speedster with hero colors */}
-          <HumanoidCharacter
-            primaryColor="#1e90ff"
-            accentColor="#debf63"
-            skinColor="#f5d4b8"
-            hairColor="#1a1a2e"
-            bodyShape="female-hourglass"
-            height={1}
-            hasCape
-            capeColor="#1e90ff"
-            hasPonytail
+          {/* REAL 3D model character (from GLB file, not primitives) */}
+          <ModelCharacter
+            url="/models/Soldier.glb"
             speedRef={currentSpeedRef}
             isMovingRef={isMovingRef}
+            scale={1.5}
+            rotationOffset={Math.PI}  // Face away from camera by default (3rd person)
+            positionOffset={[0, 0, 0]}  // Model origin is at feet
           />
-
-          {/* Face light — ensures face is always visible */}
-          <pointLight
-            position={[0, 2, 2]}
-            intensity={3}
-            distance={5}
-            color="#ffffff"
-          />
-
-          {/* Eye glow when sprinting — overlaid on the humanoid */}
-          {hero.isSprinting && (
-            <pointLight
-              position={[0, 1.5, 0.3]}
-              intensity={5}
-              distance={3}
-              color="#1e90ff"
-            />
-          )}
 
           {/* Lightning aura when slow-time active */}
           {hero.isSlowTimeActive && (
             <mesh position={[0, 1, 0]}>
-              <sphereGeometry args={[1.5, 16, 16]} />
+              <sphereGeometry args={[1.8, 16, 16]} />
               <meshStandardMaterial
                 color="#debf63"
                 emissive="#debf63"
@@ -374,7 +351,7 @@ export function Velora() {
 
           {/* Phase visual — semi-transparent shell */}
           <mesh position={[0, 1, 0]} visible={hero.isPhasing}>
-            <sphereGeometry args={[1.1, 16, 16]} />
+            <sphereGeometry args={[1.3, 16, 16]} />
             <meshStandardMaterial color="#ffffff" transparent opacity={0.2} wireframe />
           </mesh>
         </group>

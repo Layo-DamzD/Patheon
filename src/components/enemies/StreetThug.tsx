@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
-import { HumanoidCharacter } from '@/components/game/HumanoidCharacter';
+import { ModelCharacter } from '@/components/game/ModelCharacter';
 
 /**
  * Street Thug — Manual Physics Version
@@ -131,24 +131,15 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   return (
     <group ref={groupRef}>
       <group ref={visualRef}>
-        {/* Real humanoid character — male athletic, dark clothes */}
-        <HumanoidCharacter
-          primaryColor={isStunned ? '#5a5a5a' : '#2a1a1a'}
-          accentColor="#1a1a1a"
-          skinColor="#8b6f47"
-          hairColor="#1a1a1a"
-          bodyShape="male-athletic"
-          height={0.95}
-          hasPonytail={false}
+        {/* REAL 3D model character from GLB */}
+        <ModelCharacter
+          url="/models/Soldier.glb"
           speedRef={speedRef}
           isMovingRef={isMovingRef}
+          scale={1}
+          rotationOffset={Math.PI}
+          positionOffset={[0, -1.4, 0]}
         />
-
-        {/* Beanie hat — dark, on top of head */}
-        <mesh position={[0, 1.75, 0]} castShadow visible={!isDead}>
-          <sphereGeometry args={[0.26, 12, 12, 0, Math.PI * 2, 0, Math.PI / 1.6]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
-        </mesh>
 
         {/* Health bar above head */}
         {!isDead && enemy.health < enemy.maxHealth && (
@@ -166,7 +157,7 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
 
         {/* Stunned indicator */}
         {isStunned && (
-          <mesh position={[0, 2.1, 0]}>
+          <mesh position={[0, 2.4, 0]}>
             <sphereGeometry args={[0.15, 8, 8]} />
             <meshStandardMaterial color="#debf63" emissive="#debf63" emissiveIntensity={2} />
           </mesh>
