@@ -14,10 +14,10 @@ export const TUNING = {
   // ============================================================
   velora: {
     // Movement speeds (units per second)
-    jogSpeed: 8,           // Walking speed — for precise indoor movement
-    sprintSpeed: 60,       // Super speed — feels like 200mph at this scale
-    acceleration: 200,     // How fast Velora reaches max speed (higher = snappier)
-    deceleration: 300,     // How fast Velora stops when input released (higher = less slide)
+    jogSpeed: 8.4,          // Walking speed — for precise indoor movement (+5%)
+    sprintSpeed: 63,        // Super speed — feels like 200mph at this scale (+5%)
+    acceleration: 210,      // How fast Velora reaches max speed (higher = snappier) (+5%)
+    deceleration: 315,      // How fast Velora stops when input released (higher = less slide) (+5%)
 
     // Camera
     cameraDistance: 8,     // Distance behind Velora

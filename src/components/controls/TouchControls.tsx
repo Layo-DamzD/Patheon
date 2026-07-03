@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
+import { initKeyboard } from '@/lib/game/keyboardInput';
 
 /**
  * Touch Controls for Pantheon (v2 — fixed layout)
@@ -154,6 +155,12 @@ export function TouchControls() {
   const setInput = useGameStore((s) => s.setInput);
   const hero = useGameStore((s) => s.hero);
   const input = useGameStore((s) => s.input);
+
+  // Initialize keyboard input (desktop support) — runs once
+  useEffect(() => {
+    const cleanup = initKeyboard(setInput);
+    return cleanup;
+  }, [setInput]);
 
   // ──────────────────────────────────────
   // Left joystick (movement) — custom touch handler, no nipplejs

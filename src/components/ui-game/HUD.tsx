@@ -195,7 +195,7 @@ export function HUD() {
         </div>
       )}
 
-      {/* Bottom-center: hint text (disappears after first input) */}
+      {/* Bottom-center: hint text */}
       <div
         style={{
           position: 'absolute',
@@ -209,12 +209,11 @@ export function HUD() {
           fontSize: 11,
           color: '#96938d',
           textAlign: 'center',
-          maxWidth: 300,
+          maxWidth: 400,
         }}
       >
-        <span style={{ color: '#debf63', fontWeight: 700 }}>Left stick</span> move ·{' '}
-        <span style={{ color: '#1e90ff', fontWeight: 700 }}>Drag right</span> camera ·{' '}
-        <span style={{ color: '#1e90ff', fontWeight: 700 }}>SPRINT</span> super speed
+        <span style={{ color: '#debf63', fontWeight: 700 }}>Mobile:</span> Left stick move · Drag right = camera · SPRINT = super speed<br/>
+        <span style={{ color: '#debf63', fontWeight: 700 }}>Desktop:</span> WASD = move · Mouse drag = camera · Shift = sprint · Space = slow · Q = bolt · E = phase
       </div>
 
       {/* Pause button (top-right corner) */}

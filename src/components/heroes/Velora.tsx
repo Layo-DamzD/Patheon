@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
+import { consumeSlowTimePress, consumeLightningPress, consumePhasePress } from '@/lib/game/keyboardInput';
 
 /**
  * Velora — The Speedster (Manual Physics Version)
@@ -111,7 +112,7 @@ export function Velora() {
     // ─────────────────────────────────────
     // 2. Slow Time
     // ─────────────────────────────────────
-    if (input.slowTime && !slowTimeHeldRef.current && hero.slowTimeCooldown <= 0) {
+    if ((input.slowTime && !slowTimeHeldRef.current || consumeSlowTimePress()) && hero.slowTimeCooldown <= 0) {
       slowTimeActiveRef.current = true;
       slowTimeEndRef.current = state.clock.elapsedTime + t.slowTimeDuration;
       setTimeScale(t.slowTimeScale);
@@ -147,7 +148,7 @@ export function Velora() {
       currentSpeedRef.current = Math.max(targetSpeed, currentSpeedRef.current - t.deceleration * delta);
     }
 
-    const moveDir = new THREE.Vector3(moveX, 0, -moveY);
+    const moveDir = new THREE.Vector3(-moveX, 0, -moveY);
     if (moveDir.lengthSq() > 0.01) {
       moveDir.normalize();
       moveDir.applyEuler(new THREE.Euler(0, cameraYawRef.current, 0));
@@ -192,7 +193,7 @@ export function Velora() {
     // ─────────────────────────────────────
     // 4. Lightning Throw
     // ─────────────────────────────────────
-    if (input.lightning && !lightningHeldRef.current && hero.lightningCooldown <= 0) {
+    if ((input.lightning && !lightningHeldRef.current || consumeLightningPress()) && hero.lightningCooldown <= 0) {
       const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, cameraYawRef.current, 0));
       forward.y = 0.05;
       forward.normalize();
@@ -239,7 +240,7 @@ export function Velora() {
     // ─────────────────────────────────────
     // 5. Phase (Walk through walls)
     // ─────────────────────────────────────
-    if (input.phase && !phaseHeldRef.current && hero.phaseCooldown <= 0) {
+    if ((input.phase && !phaseHeldRef.current || consumePhasePress()) && hero.phaseCooldown <= 0) {
       phaseEndRef.current = state.clock.elapsedTime + t.phaseDuration;
       setHero({ isPhasing: true, phaseCooldown: t.phaseCooldown });
     }
