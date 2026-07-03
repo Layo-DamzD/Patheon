@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import nipplejs from 'nipplejs';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
@@ -154,40 +153,117 @@ export function TouchControls() {
   const cameraZoneRef = useRef<HTMLDivElement>(null);
   const setInput = useGameStore((s) => s.setInput);
   const hero = useGameStore((s) => s.hero);
+  const input = useGameStore((s) => s.input);
 
   // ──────────────────────────────────────
-  // Left joystick (movement) — visible nipplejs
+  // Left joystick (movement) — custom touch handler, no nipplejs
+  // Reliable: we control every part of the touch pipeline
   // ──────────────────────────────────────
-  useEffect(() => {
-    if (!leftZoneRef.current) return;
-    const joystick = nipplejs.create({
-      zone: leftZoneRef.current,
-      mode: 'static',
-      position: { left: '50%', top: '50%' },
-      size: TUNING.controls.joystickSize,
-      color: '#debf63',
-      restOpacity: 0.5,
-    });
+  const moveTouchId = useRef<number | null>(null);
+  const moveStartX = useRef(0);
+  const moveStartY = useRef(0);
 
-    joystick.on('move', (evt, data) => {
-      if (data.vector) {
-        const deadzone = TUNING.controls.joystickDeadzone;
-        let x = data.vector.x;
-        let y = data.vector.y;
-        const mag = Math.sqrt(x * x + y * y);
-        if (mag < deadzone) {
-          x = 0;
-          y = 0;
+  const onMoveTouchStart = useCallback((e: TouchEvent) => {
+    if (moveTouchId.current !== null) return;
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    moveTouchId.current = touch.identifier;
+    moveStartX.current = touch.clientX;
+    moveStartY.current = touch.clientY;
+  }, []);
+
+  const onMoveTouchMove = useCallback((e: TouchEvent) => {
+    if (moveTouchId.current === null) return;
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      if (touch.identifier === moveTouchId.current) {
+        // Calculate delta from start position
+        const dx = touch.clientX - moveStartX.current;
+        const dy = touch.clientY - moveStartY.current;
+        // Normalize to -1..1 range (max radius = 60px = full deflection)
+        const maxRadius = 60;
+        let nx = dx / maxRadius;
+        let ny = dy / maxRadius;
+        // Clamp magnitude to 1
+        const mag = Math.sqrt(nx * nx + ny * ny);
+        if (mag > 1) {
+          nx /= mag;
+          ny /= mag;
         }
-        setInput({ moveX: x, moveY: y });
+        // Apply deadzone
+        const deadzone = TUNING.controls.joystickDeadzone;
+        if (Math.abs(nx) < deadzone && Math.abs(ny) < deadzone) {
+          nx = 0;
+          ny = 0;
+        }
+        setInput({ moveX: nx, moveY: ny });
+        break;
       }
-    });
-    joystick.on('end', () => {
-      setInput({ moveX: 0, moveY: 0 });
-    });
-
-    return () => joystick.destroy();
+    }
   }, [setInput]);
+
+  const onMoveTouchEnd = useCallback((e: TouchEvent) => {
+    if (moveTouchId.current === null) return;
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === moveTouchId.current) {
+        moveTouchId.current = null;
+        setInput({ moveX: 0, moveY: 0 });
+        break;
+      }
+    }
+  }, [setInput]);
+
+  // Mouse fallback for desktop
+  const moveMouseDown = useRef(false);
+  const onMouseMoveStart = useCallback((e: MouseEvent) => {
+    if (moveMouseDown.current) return;
+    e.preventDefault();
+    moveMouseDown.current = true;
+    moveStartX.current = e.clientX;
+    moveStartY.current = e.clientY;
+  }, []);
+  const onMouseMoveDrag = useCallback((e: MouseEvent) => {
+    if (!moveMouseDown.current) return;
+    const dx = e.clientX - moveStartX.current;
+    const dy = e.clientY - moveStartY.current;
+    const maxRadius = 60;
+    let nx = dx / maxRadius;
+    let ny = dy / maxRadius;
+    const mag = Math.sqrt(nx * nx + ny * ny);
+    if (mag > 1) { nx /= mag; ny /= mag; }
+    const deadzone = TUNING.controls.joystickDeadzone;
+    if (Math.abs(nx) < deadzone && Math.abs(ny) < deadzone) { nx = 0; ny = 0; }
+    setInput({ moveX: nx, moveY: ny });
+  }, [setInput]);
+  const onMouseMoveEnd = useCallback(() => {
+    moveMouseDown.current = false;
+    setInput({ moveX: 0, moveY: 0 });
+  }, [setInput]);
+
+  useEffect(() => {
+    const zone = leftZoneRef.current;
+    if (!zone) return;
+
+    zone.addEventListener('touchstart', onMoveTouchStart, { passive: false });
+    zone.addEventListener('touchmove', onMoveTouchMove, { passive: false });
+    zone.addEventListener('touchend', onMoveTouchEnd, { passive: false });
+    zone.addEventListener('touchcancel', onMoveTouchEnd, { passive: false });
+    zone.addEventListener('mousedown', onMouseMoveStart);
+    window.addEventListener('mousemove', onMouseMoveDrag);
+    window.addEventListener('mouseup', onMouseMoveEnd);
+
+    return () => {
+      zone.removeEventListener('touchstart', onMoveTouchStart);
+      zone.removeEventListener('touchmove', onMoveTouchMove);
+      zone.removeEventListener('touchend', onMoveTouchEnd);
+      zone.removeEventListener('touchcancel', onMoveTouchEnd);
+      zone.removeEventListener('mousedown', onMouseMoveStart);
+      window.removeEventListener('mousemove', onMouseMoveDrag);
+      window.removeEventListener('mouseup', onMouseMoveEnd);
+    };
+  }, [onMoveTouchStart, onMoveTouchMove, onMoveTouchEnd, onMouseMoveStart, onMouseMoveDrag, onMouseMoveEnd]);
 
   // ──────────────────────────────────────
   // Right side: invisible touch-drag for camera (NO visible joystick)
@@ -313,7 +389,8 @@ export function TouchControls() {
       }}
     >
       {/* ═══════════════════════════════════════════
-          LEFT: Movement joystick (visible, gold)
+          LEFT: Movement joystick (custom, visible)
+          Shows a base circle + moving stick indicator
           ═══════════════════════════════════════════ */}
       <div
         ref={leftZoneRef}
@@ -321,15 +398,32 @@ export function TouchControls() {
           position: 'absolute',
           left: 20,
           bottom: 30,
-          width: TUNING.controls.joystickSize,
-          height: TUNING.controls.joystickSize,
+          width: 120,
+          height: 120,
           pointerEvents: 'auto',
           touchAction: 'none',
           borderRadius: '50%',
-          background: 'rgba(20, 20, 30, 0.3)',
-          border: '1px solid rgba(222, 191, 99, 0.3)',
+          background: 'rgba(20, 20, 30, 0.5)',
+          border: '2px solid rgba(222, 191, 99, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
-      />
+      >
+        {/* Inner stick — moves based on input */}
+        <div
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: '50%',
+            background: 'rgba(222, 191, 99, 0.8)',
+            border: '2px solid #ffffff',
+            transform: `translate(${input.moveX * 40}px, ${input.moveY * 40}px)`,
+            transition: 'transform 0.05s',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+          }}
+        />
+      </div>
 
       {/* ═══════════════════════════════════════════
           RIGHT: Invisible camera-drag zone (covers

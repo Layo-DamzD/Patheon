@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
@@ -73,6 +73,13 @@ export function Velora() {
   // Lightning bolts
   const [lightningBolts, setLightningBolts] = useState<any[]>([]);
 
+  // Set initial position once on mount
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(0, 5, -80);
+    }
+  }, []);
+
   useFrame((state, delta) => {
     if (!groupRef.current || !visualRef.current) return;
     delta = Math.min(delta, 0.05);
@@ -123,12 +130,16 @@ export function Velora() {
 
     // ─────────────────────────────────────
     // 3. Movement (manual physics)
+    // Joystick alone = jog speed (default movement)
+    // SPRINT button = sprint speed (faster)
+    // No button + no joystick = stand still
     // ─────────────────────────────────────
-    const targetSpeed = isSprintingRef.current
+    const hasInput = moveX * moveX + moveY * moveY > 0.01;
+    const targetSpeed = !hasInput
+      ? 0
+      : isSprintingRef.current
       ? t.sprintSpeed
-      : isJoggingRef.current
-      ? t.jogSpeed
-      : 0;
+      : t.jogSpeed;  // Default to jog speed when joystick is moved
 
     if (targetSpeed > currentSpeedRef.current) {
       currentSpeedRef.current = Math.min(targetSpeed, currentSpeedRef.current + t.acceleration * delta);
@@ -303,7 +314,7 @@ export function Velora() {
 
   return (
     <>
-      <group ref={groupRef} position={[0, 5, -80]}>
+      <group ref={groupRef}>
         <group ref={visualRef}>
           {/* Body — electric blue suit */}
           <mesh position={[0, 0, 0]} castShadow>

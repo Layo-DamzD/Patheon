@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
@@ -27,6 +27,13 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   const pos = useRef(new THREE.Vector3(initialPos[0], initialPos[1], initialPos[2]));
   const vel = useRef(new THREE.Vector3(0, 0, 0));
   const rotY = useRef(0);
+
+  // Set initial position once on mount
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(initialPos[0], initialPos[1], initialPos[2]);
+    }
+  }, [initialPos]);
 
   const enemy = useGameStore((s) => s.enemies.find((e) => e.id === id));
   const hero = useGameStore((s) => s.hero);
@@ -113,7 +120,7 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   const isStunned = enemy.state === 'stunned';
 
   return (
-    <group ref={groupRef} position={initialPos}>
+    <group ref={groupRef}>
       <group ref={visualRef}>
         {/* Body */}
         <mesh position={[0, 0, 0]} castShadow visible={!isDead}>
