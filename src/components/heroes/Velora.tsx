@@ -7,6 +7,7 @@ import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
 import { cameraInput } from '@/lib/game/cameraInput';
 import { consumeSlowTimePress, consumeLightningPress, consumePhasePress } from '@/lib/game/keyboardInput';
+import { HumanoidCharacter } from '@/components/game/HumanoidCharacter';
 
 /**
  * Velora — The Speedster (Manual Physics Version)
@@ -66,6 +67,7 @@ export function Velora() {
   const isSprintingRef = useRef(false);
   const isJoggingRef = useRef(false);
   const currentSpeedRef = useRef(0);
+  const isMovingRef = useRef(false);
 
   // Camera yaw/pitch
   const cameraYawRef = useRef(0);
@@ -136,6 +138,7 @@ export function Velora() {
     // No button + no joystick = stand still
     // ─────────────────────────────────────
     const hasInput = moveX * moveX + moveY * moveY > 0.01;
+    isMovingRef.current = hasInput;
     const targetSpeed = !hasInput
       ? 0
       : isSprintingRef.current
@@ -322,44 +325,48 @@ export function Velora() {
     <>
       <group ref={groupRef}>
         <group ref={visualRef}>
-          {/* Body — electric blue suit */}
-          <mesh position={[0, 0, 0]} castShadow>
-            <capsuleGeometry args={[0.4, 1.2, 4, 16]} />
-            <meshStandardMaterial
-              color="#1e90ff"
-              emissive="#1e90ff"
-              emissiveIntensity={0.3}
-              roughness={0.4}
-              metalness={0.5}
-            />
-          </mesh>
-          {/* Head */}
-          <mesh position={[0, 1.2, 0]} castShadow>
-            <sphereGeometry args={[0.32, 16, 16]} />
-            <meshStandardMaterial color="#f5d4b8" roughness={0.6} />
-          </mesh>
-          {/* Hair */}
-          <mesh position={[0, 1.45, -0.05]} castShadow>
-            <sphereGeometry args={[0.34, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8]} />
-            <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
-          </mesh>
-          {/* Eye glow when sprinting */}
+          {/* Real humanoid character — blue speedster suit with cape */}
+          <HumanoidCharacter
+            bodyColor="#1e90ff"
+            bodyEmissive="#1e90ff"
+            bodyEmissiveIntensity={0.25}
+            headColor="#f5d4b8"
+            hairColor="#1a1a2e"
+            height={1}
+            build="slim"
+            hasCape
+            capeColor="#1e90ff"
+            speedRef={currentSpeedRef}
+            isMovingRef={isMovingRef}
+          />
+
+          {/* Eye glow when sprinting — overlaid on the humanoid */}
           {hero.isSprinting && (
-            <mesh position={[0, 1.25, 0.3]}>
-              <sphereGeometry args={[0.08, 8, 8]} />
-              <meshStandardMaterial color="#ffffff" emissive="#1e90ff" emissiveIntensity={3} />
-            </mesh>
+            <pointLight
+              position={[0, 1.5, 0.3]}
+              intensity={5}
+              distance={3}
+              color="#1e90ff"
+            />
           )}
+
           {/* Lightning aura when slow-time active */}
           {hero.isSlowTimeActive && (
-            <mesh position={[0, 0.5, 0]}>
-              <sphereGeometry args={[1.2, 16, 16]} />
-              <meshStandardMaterial color="#debf63" emissive="#debf63" emissiveIntensity={0.3} transparent opacity={0.15} />
+            <mesh position={[0, 1, 0]}>
+              <sphereGeometry args={[1.5, 16, 16]} />
+              <meshStandardMaterial
+                color="#debf63"
+                emissive="#debf63"
+                emissiveIntensity={0.4}
+                transparent
+                opacity={0.12}
+              />
             </mesh>
           )}
-          {/* Phase visual */}
-          <mesh position={[0, 0.5, 0]} visible={hero.isPhasing}>
-            <sphereGeometry args={[0.9, 16, 16]} />
+
+          {/* Phase visual — semi-transparent shell */}
+          <mesh position={[0, 1, 0]} visible={hero.isPhasing}>
+            <sphereGeometry args={[1.1, 16, 16]} />
             <meshStandardMaterial color="#ffffff" transparent opacity={0.2} wireframe />
           </mesh>
         </group>

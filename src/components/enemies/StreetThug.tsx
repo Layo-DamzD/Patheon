@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
+import { HumanoidCharacter } from '@/components/game/HumanoidCharacter';
 
 /**
  * Street Thug — Manual Physics Version
@@ -27,6 +28,8 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   const pos = useRef(new THREE.Vector3(initialPos[0], initialPos[1], initialPos[2]));
   const vel = useRef(new THREE.Vector3(0, 0, 0));
   const rotY = useRef(0);
+  const speedRef = useRef(0);
+  const isMovingRef = useRef(false);
 
   // Set initial position once on mount
   useEffect(() => {
@@ -62,6 +65,8 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
     if (dist < t.chaseRange) {
       if (dist < t.attackRange) {
         if (enemy.state !== 'attack') updateEnemy(id, { state: 'attack' });
+        speedRef.current = 0;
+        isMovingRef.current = false;
 
         const now = state.clock.elapsedTime;
         if (lastAttackTime.current === 0) {
@@ -84,12 +89,16 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
         vel.current.x = dirX * t.moveSpeed;
         vel.current.z = dirZ * t.moveSpeed;
         rotY.current = Math.atan2(dirX, dirZ);
+        speedRef.current = t.moveSpeed;
+        isMovingRef.current = true;
       }
     } else {
       if (enemy.state !== 'idle') updateEnemy(id, { state: 'idle' });
       lastAttackTime.current = 0;
       vel.current.x = 0;
       vel.current.z = 0;
+      speedRef.current = 0;
+      isMovingRef.current = false;
     }
 
     // Apply gravity
@@ -122,25 +131,28 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
   return (
     <group ref={groupRef}>
       <group ref={visualRef}>
-        {/* Body */}
-        <mesh position={[0, 0, 0]} castShadow visible={!isDead}>
-          <capsuleGeometry args={[0.35, 1, 4, 12]} />
-          <meshStandardMaterial color={isStunned ? '#5a5a5a' : '#2a1a1a'} roughness={0.8} />
-        </mesh>
-        {/* Head */}
-        <mesh position={[0, 1.05, 0]} castShadow visible={!isDead}>
-          <sphereGeometry args={[0.28, 12, 12]} />
-          <meshStandardMaterial color="#8b6f47" roughness={0.7} />
-        </mesh>
-        {/* Beanie */}
-        <mesh position={[0, 1.2, 0]} castShadow visible={!isDead}>
-          <sphereGeometry args={[0.3, 12, 12, 0, Math.PI * 2, 0, Math.PI / 1.6]} />
+        {/* Real humanoid character — dark clothes, thug build */}
+        <HumanoidCharacter
+          bodyColor={isStunned ? '#5a5a5a' : '#2a1a1a'}
+          bodyEmissive="#000000"
+          bodyEmissiveIntensity={0}
+          headColor="#8b6f47"
+          hairColor="#1a1a1a"
+          height={0.95}
+          build="average"
+          speedRef={speedRef}
+          isMovingRef={isMovingRef}
+        />
+
+        {/* Beanie hat — dark, on top of head */}
+        <mesh position={[0, 1.75, 0]} castShadow visible={!isDead}>
+          <sphereGeometry args={[0.26, 12, 12, 0, Math.PI * 2, 0, Math.PI / 1.6]} />
           <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
         </mesh>
 
-        {/* Health bar */}
+        {/* Health bar above head */}
         {!isDead && enemy.health < enemy.maxHealth && (
-          <group position={[0, 2, 0]}>
+          <group position={[0, 2.3, 0]}>
             <mesh>
               <planeGeometry args={[1, 0.1]} />
               <meshBasicMaterial color="#000000" />
@@ -154,7 +166,7 @@ export function StreetThug({ id, position: initialPos }: StreetThugProps) {
 
         {/* Stunned indicator */}
         {isStunned && (
-          <mesh position={[0, 1.6, 0]}>
+          <mesh position={[0, 2.1, 0]}>
             <sphereGeometry args={[0.15, 8, 8]} />
             <meshStandardMaterial color="#debf63" emissive="#debf63" emissiveIntensity={2} />
           </mesh>
