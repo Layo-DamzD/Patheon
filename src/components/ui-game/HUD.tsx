@@ -2,21 +2,28 @@
 
 import { TUNING } from '@/config/tuning';
 import { useGameStore } from '@/store/gameStore';
+import { HEROES } from '@/config/heroes';
 
 /**
  * HUD — Heads-up display
  * Top-left: Hero portrait + health bar
  * Top-right: Mini-map with crime hotspots
  * Below mini-map: Mission tracker
+ * Top-center: Hero switcher + suit-up button
  */
 
 export function HUD() {
   const hero = useGameStore((s) => s.hero);
   const mission = useGameStore((s) => s.mission);
   const enemies = useGameStore((s) => s.enemies);
+  const activeHeroId = useGameStore((s) => s.activeHeroId);
+  const setActiveHero = useGameStore((s) => s.setActiveHero);
+  const isCivilian = useGameStore((s) => s.isCivilian);
+  const setCivilian = useGameStore((s) => s.setCivilian);
 
-  const healthPct = (hero.health / hero.maxHealth) * 100;
-  const healthColor = healthPct > 60 ? '#7db48f' : healthPct > 30 ? '#c8af7e' : '#c88079';
+  const activeHero = HEROES[activeHeroId];
+  const heroHealthPct = (hero.health / hero.maxHealth) * 100;
+  const healthColor = heroHealthPct > 60 ? '#7db48f' : heroHealthPct > 30 ? '#c8af7e' : '#c88079';
 
   return (
     <div
@@ -64,8 +71,12 @@ export function HUD() {
             V
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#debf63' }}>VELORA</div>
-            <div style={{ fontSize: 9, color: '#96938d' }}>Speedster · Phase 0</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: activeHero?.primaryColor || '#debf63' }}>
+              {isCivilian ? activeHero?.civilianName?.toUpperCase() : activeHero?.name.toUpperCase()}
+            </div>
+            <div style={{ fontSize: 9, color: '#96938d' }}>
+              {isCivilian ? 'Civilian' : activeHero?.id === 'velora' ? 'Speedster · Phase 0' : 'Hero · Phase 0'}
+            </div>
           </div>
         </div>
 
@@ -94,7 +105,7 @@ export function HUD() {
           >
             <div
               style={{
-                width: `${healthPct}%`,
+                width: `${heroHealthPct}%`,
                 height: '100%',
                 background: healthColor,
                 transition: 'width 0.2s, background 0.3s',
@@ -216,30 +227,90 @@ export function HUD() {
         <span style={{ color: '#debf63', fontWeight: 700 }}>Desktop:</span> WASD = move · Mouse drag = camera · Shift = sprint · Space = slow · Q = bolt · F = blow · E = phase
       </div>
 
-      {/* Pause button (top-right corner) */}
+      {/* Hero switcher + suit-up (top-center) */}
       <div
         style={{
           position: 'absolute',
           top: 12,
           left: '50%',
           transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: 8,
           pointerEvents: 'auto',
         }}
       >
-        <div
+        {/* Velora button */}
+        <button
+          onClick={() => setActiveHero('velora')}
           style={{
-            background: 'rgba(12, 11, 10, 0.85)',
-            border: '1px solid rgba(222, 191, 99, 0.4)',
-            borderRadius: 20,
-            padding: '4px 12px',
-            color: '#debf63',
+            padding: '6px 12px',
+            background: activeHeroId === 'velora' ? 'rgba(30, 144, 255, 0.3)' : 'rgba(20, 20, 30, 0.85)',
+            border: `1px solid ${activeHeroId === 'velora' ? '#1e90ff' : 'rgba(222, 191, 99, 0.3)'}`,
+            borderRadius: 8,
+            color: activeHeroId === 'velora' ? '#1e90ff' : '#96938d',
             fontSize: 11,
             fontWeight: 700,
-            letterSpacing: 1,
+            cursor: 'pointer',
+            backdropFilter: 'blur(4px)',
           }}
         >
-          PANTHEON · PHASE 0
-        </div>
+          VELORA
+        </button>
+
+        {/* Iron Man button */}
+        <button
+          onClick={() => setActiveHero('ironclad')}
+          style={{
+            padding: '6px 12px',
+            background: activeHeroId === 'ironclad' ? 'rgba(178, 34, 34, 0.3)' : 'rgba(20, 20, 30, 0.85)',
+            border: `1px solid ${activeHeroId === 'ironclad' ? '#b22222' : 'rgba(222, 191, 99, 0.3)'}`,
+            borderRadius: 8,
+            color: activeHeroId === 'ironclad' ? '#b22222' : '#96938d',
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: 'pointer',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          IRONCLAD
+        </button>
+
+        {/* Suit-up button (only for heroes with civilian model) */}
+        {activeHero?.civilianModelUrl && (
+          <button
+            onClick={() => setCivilian(!isCivilian)}
+            style={{
+              padding: '6px 12px',
+              background: isCivilian ? 'rgba(222, 191, 99, 0.2)' : 'rgba(20, 20, 30, 0.85)',
+              border: `1px solid ${isCivilian ? '#debf63' : 'rgba(222, 191, 99, 0.5)'}`,
+              borderRadius: 8,
+              color: isCivilian ? '#debf63' : '#96938d',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            {isCivilian ? '🦸 SUIT UP' : '👕 CIVILIAN'}
+          </button>
+        )}
+      </div>
+
+      {/* Active hero label */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 48,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          color: activeHero ? activeHero.primaryColor : '#debf63',
+          fontSize: 14,
+          fontWeight: 900,
+          letterSpacing: 2,
+          textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+        }}
+      >
+        {isCivilian ? activeHero?.civilianName?.toUpperCase() : activeHero?.name.toUpperCase()}
       </div>
     </div>
   );

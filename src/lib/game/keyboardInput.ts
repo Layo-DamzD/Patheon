@@ -27,6 +27,8 @@ export const keyboardInput = {
   lightningPressed: false,  // edge-triggered
   phasePressed: false,      // edge-triggered
   blowPressed: false,       // edge-triggered (melee attack)
+  flightPressed: false,     // edge-triggered (toggle flight)
+  jumpPressed: false,       // edge-triggered (jump)
 };
 
 // Track which keys are held (for continuous movement + sprint)
@@ -51,6 +53,16 @@ export function consumePhasePress(): boolean {
 export function consumeBlowPress(): boolean {
   const v = keyboardInput.blowPressed;
   keyboardInput.blowPressed = false;
+  return v;
+}
+export function consumeFlightPress(): boolean {
+  const v = keyboardInput.flightPressed;
+  keyboardInput.flightPressed = false;
+  return v;
+}
+export function consumeJumpPress(): boolean {
+  const v = keyboardInput.jumpPressed;
+  keyboardInput.jumpPressed = false;
   return v;
 }
 
@@ -83,7 +95,7 @@ export function initKeyboard(setInput: (partial: any) => void) {
       'KeyW', 'KeyA', 'KeyS', 'KeyD',
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
       'ShiftLeft', 'ShiftRight',
-      'Space', 'KeyQ', 'KeyE', 'KeyF',
+      'Space', 'KeyQ', 'KeyE', 'KeyF', 'KeyR',
     ];
     if (gameKeys.includes(e.code)) {
       e.preventDefault();
@@ -91,10 +103,14 @@ export function initKeyboard(setInput: (partial: any) => void) {
 
     // Edge-triggered actions (only fire on initial press, not repeat)
     if (!e.repeat) {
-      if (e.code === 'Space') keyboardInput.slowTimePressed = true;
+      if (e.code === 'Space') {
+        keyboardInput.jumpPressed = true;
+        keyboardInput.slowTimePressed = true;  // Space = both jump and slow time (context-dependent)
+      }
       if (e.code === 'KeyQ') keyboardInput.lightningPressed = true;
       if (e.code === 'KeyE') keyboardInput.phasePressed = true;
       if (e.code === 'KeyF') keyboardInput.blowPressed = true;
+      if (e.code === 'KeyR') keyboardInput.flightPressed = true;  // R = toggle flight
     }
 
     heldKeys.add(e.code);

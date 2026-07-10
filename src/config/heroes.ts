@@ -132,6 +132,7 @@ export const HEROES: Record<string, HeroConfig> = {
     name: 'Ironclad',
     civilianName: 'Tony Stark',
     modelUrl: '/models/Ironclad.glb',
+    civilianModelUrl: '/models/TonyStark.glb',
     scale: 1.2,
     rotationOffset: Math.PI,
     positionOffset: [0, 0, 0],

@@ -4,19 +4,50 @@ import { Canvas } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { TUNING } from '@/config/tuning';
-import { Midtown } from '@/components/world/Midtown';
-import { Velora } from '@/components/heroes/Velora';
+import { NYC } from '@/components/world/NYC';
 import { CrimeManager } from '@/components/enemies/CrimeManager';
+import { useAnimationLibrary } from '@/lib/game/animationLibrary';
+import { HeroLoader } from '@/lib/game/heroLoader';
+import { HEROES } from '@/config/heroes';
+import { useGameStore } from '@/store/gameStore';
 
 /**
- * Game Scene — the actual 3D world.
+ * Game Scene v2 — uses new universal systems
  *
- * NOTE: @react-three/rapier Physics was removed because v2.2.0 has a
- * compatibility issue with R3F v9 that causes the entire scene to not render.
- * Physics is now handled manually in each component's useFrame (gravity,
- * ground collision, velocity). This is simpler and more reliable for Phase 0.
- * We can revisit Rapier when the compatibility issue is resolved.
+ * - NYC city (uploaded assets + procedural)
+ * - HeroLoader (works for any hero)
+ * - Animation library (Quaternius + Rokoko + IronMan)
+ * - Hero switching (Velora ↔ Iron Man)
+ * - Civilian/hero mode (Tony Stark ↔ Iron Man)
  */
+
+function ActiveHero() {
+  const { clips } = useAnimationLibrary();
+  const activeHeroId = useGameStore((s) => s.activeHeroId);
+  const isCivilian = useGameStore((s) => s.isCivilian);
+  const input = useGameStore((s) => s.input);
+  const hero = useGameStore((s) => s.hero);
+  const setHero = useGameStore((s) => s.setHero);
+  const damageEnemy = useGameStore((s) => s.damageEnemy);
+  const enemies = useGameStore((s) => s.enemies);
+
+  const heroConfig = HEROES[activeHeroId];
+  if (!heroConfig || clips.length === 0) return null;
+
+  return (
+    <HeroLoader
+      key={activeHeroId + (isCivilian ? '-civilian' : '-hero')}
+      heroConfig={heroConfig}
+      clips={clips}
+      input={input}
+      hero={hero}
+      setHero={setHero}
+      damageEnemy={damageEnemy}
+      enemies={enemies}
+      isCivilian={isCivilian}
+    />
+  );
+}
 
 export function GameScene() {
   return (
@@ -44,11 +75,7 @@ export function GameScene() {
     >
       {/* Lighting */}
       <ambientLight intensity={0.6} color="#ffffff" />
-      <hemisphereLight
-        intensity={0.8}
-        color="#cbd5e0"
-        groundColor="#3a2a1a"
-      />
+      <hemisphereLight intensity={0.8} color="#cbd5e0" groundColor="#3a2a1a" />
       <directionalLight
         position={[40, 60, 20]}
         intensity={2.5}
@@ -74,13 +101,13 @@ export function GameScene() {
         speed={0.5}
       />
 
-      {/* The city */}
-      <Midtown />
+      {/* NYC City */}
+      <NYC />
 
-      {/* The hero — manual physics, no RigidBody needed */}
-      <Velora />
+      {/* Active Hero (Velora or Iron Man) */}
+      <ActiveHero />
 
-      {/* Crime manager + enemies — also manual physics */}
+      {/* Crime manager + enemies */}
       <CrimeManager />
     </Canvas>
   );

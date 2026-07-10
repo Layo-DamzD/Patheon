@@ -62,6 +62,16 @@ interface GameStore {
   setHero: (partial: Partial<HeroState>) => void;
   damageHero: (amount: number) => void;
 
+  // Active hero ID (which hero is currently playable)
+  activeHeroId: string;
+  setActiveHero: (id: string) => void;
+
+  // Suit-up state (civilian vs hero mode)
+  isCivilian: boolean;
+  setCivilian: (civilian: boolean) => void;
+  isSuitingUp: boolean;
+  setSuitingUp: (suiting: boolean) => void;
+
   // Input
   input: InputState;
   setInput: (partial: Partial<InputState>) => void;
@@ -127,6 +137,14 @@ export const useGameStore = create<GameStore>((set) => ({
     set((s) => ({
       hero: { ...s.hero, health: Math.max(0, s.hero.health - amount) },
     })),
+
+  activeHeroId: 'velora',
+  setActiveHero: (id) => set({ activeHeroId: id }),
+
+  isCivilian: false,
+  setCivilian: (civilian) => set({ isCivilian: civilian }),
+  isSuitingUp: false,
+  setSuitingUp: (suiting) => set({ isSuitingUp: suiting }),
 
   input: defaultInput,
   setInput: (partial) => set((s) => ({ input: { ...s.input, ...partial } })),

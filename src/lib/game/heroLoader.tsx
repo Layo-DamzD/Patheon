@@ -10,6 +10,7 @@ import { AnimationClip, findClip } from './animationLibrary';
 import { useAnimationStateMachine, AnimState } from './animationStateMachine';
 import { useFlightSystem, FlightState } from './flightSystem';
 import { cameraInput } from './cameraInput';
+import { consumeFlightPress, consumeJumpPress } from './keyboardInput';
 import { TUNING } from '@/config/tuning';
 
 /**
@@ -32,6 +33,7 @@ interface HeroLoaderProps {
   setHero: (partial: any) => void;
   damageEnemy: (id: string, amount: number) => void;
   enemies: any[];
+  isCivilian: boolean;     // civilian mode (Tony Stark) vs hero mode (Iron Man)
 }
 
 export function HeroLoader({
@@ -42,13 +44,19 @@ export function HeroLoader({
   setHero,
   damageEnemy,
   enemies,
+  isCivilian,
 }: HeroLoaderProps) {
   const groupRef = useRef<THREE.Group>(null);
   const visualRef = useRef<THREE.Group>(null);
   const { get } = useThree();
 
+  // Determine which model to load (civilian or hero)
+  const modelUrl = isCivilian && heroConfig.civilianModelUrl
+    ? heroConfig.civilianModelUrl
+    : heroConfig.modelUrl;
+
   // Load the hero model
-  const { scene, animations } = useGLTF(heroConfig.modelUrl);
+  const { scene, animations } = useGLTF(modelUrl);
   const clonedScene = useMemo(() => SkeletonUtils.clone(scene), [scene]);
 
   // Setup animation mixer for this character
@@ -140,12 +148,13 @@ export function HeroLoader({
     const camera = get().camera;
 
     // ─── Update flight input ref ───
+    // When flying: jump button = ascend, blow button = descend
     flightInputRef.current = {
       moveX: input.moveX,
       moveY: input.moveY,
-      flight: input.flight || false,
-      ascend: input.jump || false,    // Jump button = ascend in flight
-      descend: input.blow || false,   // Blow button = descend in flight
+      flight: flightInputRef.current.flight,  // preserve edge-triggered state
+      ascend: input.jump || false,
+      descend: input.blow || false,
     };
 
     // ─── Camera rotation from drag ───
@@ -196,26 +205,25 @@ export function HeroLoader({
       velocity.current.y += GRAVITY * delta;
     }
 
-    // ─── Jump ───
-    if (heroConfig.abilities.jump && input.jump && !jumpHeldRef.current && !isFlyingRef.current) {
+    // ─── Jump (from touch button OR keyboard Space) ───
+    const jumpInput = input.jump || consumeJumpPress();
+    if (heroConfig.abilities.jump && jumpInput && !jumpHeldRef.current && !isFlyingRef.current) {
       if (position.current.y <= GROUND_Y + 0.1) {
         velocity.current.y = 12;
         isJumpingRef.current = true;
       }
     }
-    jumpHeldRef.current = input.jump;
+    jumpHeldRef.current = jumpInput;
 
     // Reset jump state when landed
     if (isJumpingRef.current && position.current.y <= GROUND_Y + 0.1 && velocity.current.y < 0) {
       isJumpingRef.current = false;
     }
 
-    // ─── Flight toggle (edge-triggered) ───
+    // ─── Flight toggle (edge-triggered from touch OR keyboard R key) ───
     if (heroConfig.abilities.flight) {
-      const flightInput = input.flight || false;
-      if (flightInput && !flightHeldRef.current) {
-        // Toggle handled in flight system
-      }
+      const flightInput = input.flight || consumeFlightPress();
+      flightInputRef.current.flight = flightInput;
       flightHeldRef.current = flightInput;
     }
 

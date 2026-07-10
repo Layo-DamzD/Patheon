@@ -159,6 +159,19 @@ const BlowIcon = (
     <path d="M19 8l2-1M20 12l2 0M19 16l2 1" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
+const JumpIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+    <path d="M12 4v10m0 0l-4-4m4 4l4-4" />
+    <line x1="6" y1="20" x2="18" y2="20" />
+  </svg>
+);
+const FlightIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+    {/* Wing/flight icon */}
+    <path d="M2 12c4-4 8-4 10-2 2-2 6-2 10 2-4 0-6 2-8 2-2 2-6 2-8 2-2 0-3-2-4-4z" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" />
+  </svg>
+);
 
 export function TouchControls() {
   const leftZoneRef = useRef<HTMLDivElement>(null);
@@ -395,6 +408,8 @@ export function TouchControls() {
   const handleLightning = useCallback((a: boolean) => setInput({ lightning: a }), [setInput]);
   const handlePhase = useCallback((a: boolean) => setInput({ phase: a }), [setInput]);
   const handleBlow = useCallback((a: boolean) => setInput({ blow: a }), [setInput]);
+  const handleFlight = useCallback((a: boolean) => setInput({ flight: a }), [setInput]);
+  const handleJump = useCallback((a: boolean) => setInput({ jump: a }), [setInput]);
 
   return (
     <div
@@ -518,6 +533,21 @@ export function TouchControls() {
           icon={BlowIcon}
           onPress={handleBlow}
           color="#c88079"
+        />
+        <ActionButton
+          id="btn-jump"
+          label="JUMP"
+          icon={JumpIcon}
+          onPress={handleJump}
+          color="#7db48f"
+        />
+        <ActionButton
+          id="btn-flight"
+          label="FLY"
+          icon={FlightIcon}
+          onPress={handleFlight}
+          active={hero.isFlying}
+          color="#85a5c5"
         />
         <ActionButton
           id="btn-phase"
