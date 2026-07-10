@@ -15,7 +15,9 @@ export interface InputState {
   lightning: boolean;
   tornado: boolean;
   phase: boolean;
-  blow: boolean;      // Melee attack (punch/strike)
+  blow: boolean;      // Melee attack (punch/BLOW)
+  flight: boolean;    // Toggle flight on/off
+  jump: boolean;
 }
 
 export interface HeroState {
@@ -27,6 +29,8 @@ export interface HeroState {
   isWaterRunning: boolean;
   isPhasing: boolean;
   isSlowTimeActive: boolean;
+  isFlying: boolean;
+  isHovering: boolean;
   slowTimeCooldown: number;
   lightningCooldown: number;
   tornadoCooldown: number;
@@ -95,6 +99,8 @@ const defaultInput: InputState = {
   tornado: false,
   phase: false,
   blow: false,
+  flight: false,
+  jump: false,
 };
 
 const defaultHero: HeroState = {
@@ -106,6 +112,8 @@ const defaultHero: HeroState = {
   isWaterRunning: false,
   isPhasing: false,
   isSlowTimeActive: false,
+  isFlying: false,
+  isHovering: false,
   slowTimeCooldown: 0,
   lightningCooldown: 0,
   tornadoCooldown: 0,

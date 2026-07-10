@@ -49,7 +49,7 @@ export default function Home() {
       {/* HUD overlay (health, minimap, mission tracker) */}
       <HUD />
 
-      {/* Desktop hint — tell user to use a phone for best experience */}
+      {/* Desktop hint */}
       {!isMobile && (
         <div
           style={{
