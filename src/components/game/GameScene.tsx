@@ -32,6 +32,7 @@ function ActiveHero() {
   const enemies = useGameStore((s) => s.enemies);
 
   const heroConfig = HEROES[activeHeroId];
+  // Don't render until clips are loaded (prevents black screen)
   if (!heroConfig || clips.length === 0) return null;
 
   return (

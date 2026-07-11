@@ -59,24 +59,12 @@ export function NYC() {
       {generateRoadGrid(blockSize)}
 
       {/* ═══════════════════════════════════════════
-          DOWNTOWN BUILDINGS — uploaded asset set
-          Placed on either side of the highway
+          DOWNTOWN BUILDINGS — skipped (16MB too heavy for now)
+          Using procedural buildings instead (below)
           ═══════════════════════════════════════════ */}
-      <LoadedModel
-        url="/models/DowntownBuildings.glb"
-        position={[-40, 0, -30]}
-        scale={1}
-      />
-      <LoadedModel
-        url="/models/DowntownBuildings.glb"
-        position={[40, 0, -30]}
-        rotation={[0, Math.PI, 0]}
-        scale={1}
-      />
 
       {/* ═══════════════════════════════════════════
           AVENGERS TOWER — Stark Tower landmark
-          Prominent position at the end of the street
           ═══════════════════════════════════════════ */}
       <LoadedModel
         url="/models/AvengersTower.glb"
@@ -272,5 +260,3 @@ function generateStreetLamps(blockSize: number) {
 
 // Preload models
 useGLTF.preload('/models/AvengersTower.glb');
-useGLTF.preload('/models/DowntownBuildings.glb');
-useGLTF.preload('/models/NYHighway.glb');
