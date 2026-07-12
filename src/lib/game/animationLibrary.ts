@@ -66,6 +66,14 @@ export const ANIMATION_ALIASES: Record<string, string[]> = {
   mutant_claws: ['MutantClaws', 'Claws', 'Slash'],
   laser_eyes: ['LaserEyes', 'Laser', 'Beam'],
   telekinesis: ['Telekenisis', 'Telekinesis', 'TK'],
+  // Spider-Man specific
+  web_swing: ['Swinging', 'Swing', 'Web Swing'],
+  web_swing_start: ['Start Swinging', 'Start Swing'],
+  web_swing_land: ['Swing To Land', 'Swing Land'],
+  wall_run: ['Wall Run', 'WallRun'],
+  wall_crawl: ['Low Crawl', 'LowCrawl', 'Crawl'],
+  glide: ['Dying', 'Jump Away', 'Swim_Fwd_Loop'],  // horizontal body for glide/flight
+  jump_away: ['Jump Away', 'JumpAway'],
 };
 
 /**
@@ -80,6 +88,8 @@ export function useAnimationLibrary() {
 
   // State for Pro Magic Pack FBX animations (loaded async)
   const [proMagicClips, setProMagicClips] = useState<AnimationClip[]>([]);
+  // State for Spider-Man FBX animations (loaded async)
+  const [spidermanClips, setSpidermanClips] = useState<AnimationClip[]>([]);
 
   // Load Pro Magic Pack FBX animations
   useEffect(() => {
@@ -149,6 +159,48 @@ export function useAnimationLibrary() {
     });
   }, []);
 
+  // Load Spider-Man FBX animations
+  useEffect(() => {
+    const loader = new FBXLoader();
+    const spidermanFiles = [
+      'Swinging.fbx',
+      'Start Swinging.fbx',
+      'Swing To Land.fbx',
+      'Wall Run.fbx',
+      'Low Crawl.fbx',
+      'Dying.fbx',
+      'Jump Away.fbx',
+    ];
+
+    const loadedClips: AnimationClip[] = [];
+    let loadedCount = 0;
+
+    spidermanFiles.forEach((file) => {
+      loader.load(
+        `/models/animations/spiderman/${file}`,
+        (object: THREE.Group) => {
+          if (object.animations && object.animations.length > 0) {
+            const clip = object.animations[0];
+            const cleanName = file.replace('.fbx', '').trim();
+            loadedClips.push({ name: cleanName, clip, source: 'spiderman' });
+          }
+          loadedCount++;
+          if (loadedCount === spidermanFiles.length) {
+            setSpidermanClips(loadedClips);
+          }
+        },
+        undefined,
+        (err) => {
+          console.warn(`Failed to load ${file}:`, err);
+          loadedCount++;
+          if (loadedCount === spidermanFiles.length) {
+            setSpidermanClips(loadedClips);
+          }
+        }
+      );
+    });
+  }, []);
+
   // Compute GLB clips from loaded GLTFs (memoized)
   const glbClips = useMemo<AnimationClip[]>(() => {
     const result: AnimationClip[] = [];
@@ -169,7 +221,7 @@ export function useAnimationLibrary() {
   }, [quaterniusGltf, ironmanFlyGltf]);
 
   // Combine all clips
-  const clips = useMemo(() => [...glbClips, ...proMagicClips], [glbClips, proMagicClips]);
+  const clips = useMemo(() => [...glbClips, ...proMagicClips, ...spidermanClips], [glbClips, proMagicClips, spidermanClips]);
   const loaded = clips.length > 0;
 
   return { clips, loaded };

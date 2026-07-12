@@ -194,7 +194,8 @@ export const HEROES: Record<string, HeroConfig> = {
     id: 'arachne',
     name: 'Arachne',
     civilianName: 'Peter Parker',
-    modelUrl: '/models/Arachne.glb',  // TODO: upload
+    modelUrl: '/models/Arachne.glb',  // Uses Soldier placeholder for now
+    civilianModelUrl: '/models/PeterParker.glb',  // TODO: upload
     scale: 1.5,
     rotationOffset: Math.PI,
     positionOffset: [0, 0, 0],
@@ -203,8 +204,11 @@ export const HEROES: Record<string, HeroConfig> = {
     accentColor: '#1a1a2e',
     glowColor: '#dc143c',
 
-    flightStyle: 'none',
+    // Spider-Man: web-wing glide = horizontal flight, uses Dying/Jump Away pose
+    flightStyle: 'horizontal_only',
     landingStyle: 'both',
+    flightAnimationAlias: 'glide',  // Dying/Jump Away = horizontal body
+    hoverAnimationAlias: 'wall_crawl',  // Low Crawl = perched on building edge
 
     abilities: {
       sprint: true,
@@ -212,10 +216,16 @@ export const HEROES: Record<string, HeroConfig> = {
       punch: true,
       dodge: true,
       throw: true,        // web shoot
+      flight: true,       // web-wing glide
       blow: true,
     },
 
-    buttonLayout: ['run', 'jump', 'web_shoot', 'dodge', 'punch'],
+    // Spider-Man animations: web swing (1 hand), wall run/crawl, glide
+    // web_swing = Swinging.fbx (one-hand swing)
+    // wall_crawl = Low Crawl.fbx (crouching at building edge)
+    // glide = Dying.fbx or Jump Away.fbx (horizontal body for web-wing glide)
+    // web_swing_land = Swing To Land.fbx (landing from swing)
+    buttonLayout: ['run', 'jump', 'web_shoot', 'web_swing', 'web_glide', 'dodge', 'punch'],
   },
 
   glitch: {
