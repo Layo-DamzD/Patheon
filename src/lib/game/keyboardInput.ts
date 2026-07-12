@@ -23,12 +23,12 @@ export const keyboardInput = {
   left: false,
   right: false,
   sprint: false,
-  slowTimePressed: false,   // edge-triggered (one-shot per press)
-  lightningPressed: false,  // edge-triggered
-  phasePressed: false,      // edge-triggered
-  blowPressed: false,       // edge-triggered (melee attack)
-  flightPressed: false,     // edge-triggered (toggle flight)
-  jumpPressed: false,       // edge-triggered (jump)
+  slowTimePressed: false,
+  lightningPressed: false,
+  phasePressed: false,
+  blowPressed: false,
+  flightPressed: false,
+  jumpPressed: false,
 };
 
 // Track which keys are held (for continuous movement + sprint)
@@ -103,14 +103,11 @@ export function initKeyboard(setInput: (partial: any) => void) {
 
     // Edge-triggered actions (only fire on initial press, not repeat)
     if (!e.repeat) {
-      if (e.code === 'Space') {
-        keyboardInput.jumpPressed = true;
-        keyboardInput.slowTimePressed = true;  // Space = both jump and slow time (context-dependent)
-      }
+      if (e.code === 'Space') { keyboardInput.slowTimePressed = true; keyboardInput.jumpPressed = true; }
       if (e.code === 'KeyQ') keyboardInput.lightningPressed = true;
       if (e.code === 'KeyE') keyboardInput.phasePressed = true;
       if (e.code === 'KeyF') keyboardInput.blowPressed = true;
-      if (e.code === 'KeyR') keyboardInput.flightPressed = true;  // R = toggle flight
+      if (e.code === 'KeyR') keyboardInput.flightPressed = true;
     }
 
     heldKeys.add(e.code);

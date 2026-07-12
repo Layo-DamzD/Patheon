@@ -227,7 +227,7 @@ export function HUD() {
         <span style={{ color: '#debf63', fontWeight: 700 }}>Desktop:</span> WASD = move · Mouse drag = camera · Shift = sprint · Space = slow · Q = bolt · F = blow · E = phase
       </div>
 
-      {/* Hero switcher + suit-up (top-center) */}
+      {/* Hero switcher — ALL 11 heroes (scrollable) */}
       <div
         style={{
           position: 'absolute',
@@ -235,66 +235,62 @@ export function HUD() {
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
-          gap: 8,
+          gap: 4,
           pointerEvents: 'auto',
+          maxWidth: '90%',
+          overflowX: 'auto',
+          padding: '4px 8px',
+          background: 'rgba(12, 11, 10, 0.6)',
+          borderRadius: 12,
+          backdropFilter: 'blur(4px)',
         }}
       >
-        {/* Velora button */}
-        <button
-          onClick={() => setActiveHero('velora')}
-          style={{
-            padding: '6px 12px',
-            background: activeHeroId === 'velora' ? 'rgba(30, 144, 255, 0.3)' : 'rgba(20, 20, 30, 0.85)',
-            border: `1px solid ${activeHeroId === 'velora' ? '#1e90ff' : 'rgba(222, 191, 99, 0.3)'}`,
-            borderRadius: 8,
-            color: activeHeroId === 'velora' ? '#1e90ff' : '#96938d',
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: 'pointer',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          VELORA
-        </button>
-
-        {/* Iron Man button */}
-        <button
-          onClick={() => setActiveHero('ironclad')}
-          style={{
-            padding: '6px 12px',
-            background: activeHeroId === 'ironclad' ? 'rgba(178, 34, 34, 0.3)' : 'rgba(20, 20, 30, 0.85)',
-            border: `1px solid ${activeHeroId === 'ironclad' ? '#b22222' : 'rgba(222, 191, 99, 0.3)'}`,
-            borderRadius: 8,
-            color: activeHeroId === 'ironclad' ? '#b22222' : '#96938d',
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: 'pointer',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          IRONCLAD
-        </button>
-
-        {/* Suit-up button (only for heroes with civilian model) */}
-        {activeHero?.civilianModelUrl && (
+        {Object.values(HEROES).map((h) => (
           <button
-            onClick={() => setCivilian(!isCivilian)}
+            key={h.id}
+            onClick={() => setActiveHero(h.id)}
             style={{
-              padding: '6px 12px',
-              background: isCivilian ? 'rgba(222, 191, 99, 0.2)' : 'rgba(20, 20, 30, 0.85)',
-              border: `1px solid ${isCivilian ? '#debf63' : 'rgba(222, 191, 99, 0.5)'}`,
-              borderRadius: 8,
-              color: isCivilian ? '#debf63' : '#96938d',
-              fontSize: 11,
+              padding: '5px 10px',
+              background: activeHeroId === h.id ? `${h.primaryColor}30` : 'transparent',
+              border: `1px solid ${activeHeroId === h.id ? h.primaryColor : 'rgba(222, 191, 99, 0.2)'}`,
+              borderRadius: 6,
+              color: activeHeroId === h.id ? h.primaryColor : '#96938d',
+              fontSize: 10,
               fontWeight: 700,
               cursor: 'pointer',
-              backdropFilter: 'blur(4px)',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
-            {isCivilian ? '🦸 SUIT UP' : '👕 CIVILIAN'}
+            {h.name.toUpperCase()}
           </button>
-        )}
+        ))}
       </div>
+
+      {/* Suit-up button (below hero switcher, only for heroes with civilian model) */}
+      {activeHero?.civilianModelUrl && (
+        <button
+          onClick={() => setCivilian(!isCivilian)}
+          style={{
+            position: 'absolute',
+            top: 52,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '5px 12px',
+            background: isCivilian ? 'rgba(222, 191, 99, 0.2)' : 'rgba(20, 20, 30, 0.85)',
+            border: `1px solid ${isCivilian ? '#debf63' : 'rgba(222, 191, 99, 0.5)'}`,
+            borderRadius: 8,
+            color: isCivilian ? '#debf63' : '#96938d',
+            fontSize: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+            backdropFilter: 'blur(4px)',
+            pointerEvents: 'auto',
+          }}
+        >
+          {isCivilian ? '🦸 SUIT UP' : '👕 CIVILIAN'}
+        </button>
+      )}
 
       {/* Active hero label */}
       <div

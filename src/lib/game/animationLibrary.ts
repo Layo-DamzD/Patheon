@@ -29,10 +29,10 @@ export interface AnimationClip {
 
 // Animation aliases — map simple names to actual clip names
 export const ANIMATION_ALIASES: Record<string, string[]> = {
-  idle: ['Idle_Loop', 'idle', 'Idle', 'idle 02', 'Idle 03'],
-  run: ['Sprint_Loop', 'Run', 'Running', 'run', 'Run Forward', 'Sprint Forward'],
-  walk: ['Walk_Loop', 'Walk', 'Walking', 'walk', 'Walk Forward', 'Walk Back'],
-  jog: ['Jog_Fwd_Loop', 'Jog', 'Run Forward'],
+  idle: ['Idle_Loop', 'idle', 'Idle', 'idle 02', 'Idle 03', 'Character_Idle', 'mixamo.com'],
+  run: ['Sprint_Loop', 'Run', 'Running', 'run', 'Run Forward', 'Sprint Forward', 'Character_Run'],
+  walk: ['Walk_Loop', 'Walk', 'Walking', 'walk', 'Walk Forward', 'Walk Back', 'Character_Walk'],
+  jog: ['Jog_Fwd_Loop', 'Jog', 'Run Forward', 'Character_Run'],
   jump_start: ['Jump_Start', 'JumpStart', 'Jump', 'Jump Running'],
   jump_loop: ['Jump_Loop', 'JumpLoop'],
   jump_land: ['Jump_Land', 'JumpLand', 'Landing', 'Land To idle', 'Land To Standing Idle', 'Jump Running Landing'],
@@ -181,15 +181,31 @@ export function useAnimationLibrary() {
 export function findClip(clips: AnimationClip[], alias: string): THREE.AnimationClip | null {
   const possibleNames = ANIMATION_ALIASES[alias] || [alias];
 
+  // Exact match
   for (const name of possibleNames) {
     const found = clips.find((c) => c.name === name || c.name.toLowerCase() === name.toLowerCase());
     if (found) return found.clip;
   }
 
-  // Fallback: partial match
+  // Partial match
   for (const name of possibleNames) {
     const found = clips.find((c) => c.name.toLowerCase().includes(name.toLowerCase()));
     if (found) return found.clip;
+  }
+
+  // Fallback for models with numeric animation names (like Soldier: 0, 1, 2, 3)
+  // Assume: 0=idle, 1=run, 2=walk, 3=other
+  if (clips.length > 0 && /^\d+$/.test(clips[0].name)) {
+    const numericMap: Record<string, number> = {
+      idle: 0, run: 1, walk: 2, jog: 1,
+      jump: 3, punch: 3, hover: 3, fly: 3,
+    };
+    const idx = numericMap[alias];
+    if (idx !== undefined && idx < clips.length) {
+      return clips[idx].clip;
+    }
+    // Default: return first clip
+    if (alias === 'idle') return clips[0].clip;
   }
 
   return null;

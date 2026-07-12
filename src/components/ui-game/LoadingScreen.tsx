@@ -24,9 +24,9 @@ export function LoadingScreen({ onComplete }: { onComplete: () => void }) {
           }
           return 100;
         }
-        return p + Math.random() * 10 + 5;  // Fast loading
+        return p + Math.random() * 8 + 2;
       });
-    }, 60);
+    }, 80);
     return () => clearInterval(interval);
   }, [onComplete]);
 

@@ -56,11 +56,23 @@ export function HeroLoader({
     : heroConfig.modelUrl;
 
   // Load the hero model
-  const { scene, animations } = useGLTF(modelUrl);
+  const { scene, animations: modelAnimations } = useGLTF(modelUrl);
   const clonedScene = useMemo(() => SkeletonUtils.clone(scene), [scene]);
 
   // Setup animation mixer for this character
   const mixer = useMemo(() => new THREE.AnimationMixer(clonedScene), [clonedScene]);
+
+  // Convert model's own animations to clips (these are GUARANTEED to work — same skeleton)
+  const modelClips = useMemo<AnimationClip[]>(() => {
+    return modelAnimations.map((clip) => ({
+      name: clip.name,
+      clip,
+      source: 'model',
+    }));
+  }, [modelAnimations]);
+
+  // Combine: model's own clips FIRST (priority), then library clips
+  const allClips = useMemo(() => [...modelClips, ...clips], [modelClips, clips]);
 
   // Physics state
   const position = useRef(new THREE.Vector3(0, 5, -80));
@@ -112,10 +124,10 @@ export function HeroLoader({
     });
   }, [clonedScene]);
 
-  // Hook up animation state machine
+  // Hook up animation state machine (uses model's own clips + library clips)
   const { playAnimation } = useAnimationStateMachine({
     mixer,
-    clips,
+    clips: allClips,
     heroConfig,
     speedRef: currentSpeedRef,
     isMovingRef,

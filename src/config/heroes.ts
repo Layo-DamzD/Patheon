@@ -69,7 +69,7 @@ export const HEROES: Record<string, HeroConfig> = {
     id: 'velora',
     name: 'Velora',
     civilianName: 'Makkari',
-    modelUrl: '/models/Velora.glb',
+    modelUrl: '/models/Soldier.glb',  // Using Soldier (rigged) until we get a rigged female model
     scale: 1.5,
     rotationOffset: Math.PI,
     positionOffset: [0, 0, 0],
@@ -131,9 +131,9 @@ export const HEROES: Record<string, HeroConfig> = {
     id: 'ironclad',
     name: 'Ironclad',
     civilianName: 'Tony Stark',
-    modelUrl: '/models/Ironclad_Lite.glb',
+    modelUrl: '/models/Ironclad.glb',
     civilianModelUrl: '/models/TonyStark.glb',
-    scale: 1.5,
+    scale: 1.2,
     rotationOffset: Math.PI,
     positionOffset: [0, 0, 0],
 
